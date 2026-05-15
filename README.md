@@ -1,4 +1,4 @@
-# Supabase PHP Client
+## Supabase PHP Client
 
 <div align="center">
 
@@ -15,7 +15,7 @@ Modern, lightweight, fluent Supabase client for PHP.
 
 ---
 
-## Features
+### Features
 
 - [x] Fluent Query Builder
 - [x] Supabase REST API Support
@@ -30,10 +30,15 @@ Modern, lightweight, fluent Supabase client for PHP.
 
 ---
 
-# Installation
+### Installation
 
 Install via Composer:
 
 ```bash
 composer require sushilk/supabase
 ```
+
+---
+
+### Author
+**Sushil Kumar**
