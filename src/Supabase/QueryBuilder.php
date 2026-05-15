@@ -69,10 +69,9 @@ class QueryBuilder
     /**
      * Adds a basic filter to the query.
      *
-     * @param string $column  The name of the database column.
-     * @param mixed $value  The value to filter by.
-     * @param string $operator  The operator to use (e.g., 'eq', 'gt', 'lt'). Defaults to 'eq'.
-     *
+     * @param  string  $column  The name of the database column.
+     * @param  mixed  $value  The value to filter by.
+     * @param  string  $operator  The operator to use (e.g., 'eq', 'gt', 'lt'). Defaults to 'eq'.
      * @return static Returns the current instance for method chaining.
      */
     public function where(
@@ -80,14 +79,14 @@ class QueryBuilder
         mixed $value,
         string $operator = 'eq'
     ): static {
-        if(is_array($value)) {
-            $mapped = array_map(function(mixed $item): string {
-                return is_scalar($item) || $item instanceof \Stringable ? (string)$item : '';
+        if (is_array($value)) {
+            $mapped = array_map(function (mixed $item): string {
+                return is_scalar($item) || $item instanceof \Stringable ? (string) $item : '';
             }, $value);
-            $value = '(' . implode(',', $mapped) . ')';
-        } elseif(is_bool($value)){
+            $value = '('.implode(',', $mapped).')';
+        } elseif (is_bool($value)) {
             $value = $value ? 'true' : 'false';
-        } elseif(is_null($value)){
+        } elseif (is_null($value)) {
             $value = 'null';
         }
 
