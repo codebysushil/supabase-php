@@ -1,0 +1,10 @@
+/.gitignore export-ignore
+/.gitattributes export-ignore
+/.editorconfig export-ignore
+/.github/ export-ignore
+/tests/ export-ignore
+/phpunit.xml export-ignore
+/phpstan.neon export-ignore
+/rector.php export-ignore
+/composer.lock export-ignore
+/examples/ export-ignore
