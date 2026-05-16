@@ -47,7 +47,8 @@ composer require sushilk/supabase
 
 require_once(__DIR__ . '/vendor/autoload.php');
 
-use Sushilk\Supabase\Client;                      
+use Sushilk\Supabase\Client;
+           
 $client = new Client(
     'https://<project-id>.supabase.co',
     'apikey'
