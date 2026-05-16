@@ -37,6 +37,10 @@
             "email": "sushilkumbhar77@gmail.com"
         }
     ],
+    "suggest": {
+        "ext-curl": "Required by Guzzle for optimal, high-performance HTTP requests.",
+    "ext-json": "Required for processing JSON payloads from Supabase API responses."
+    },
     "config": {
         "sort-packages": true,
         "preferred-install": "dist",
