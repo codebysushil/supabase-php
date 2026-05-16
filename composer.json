@@ -38,6 +38,9 @@
         }
     ],
     "config": {
+        "sort-packages": true,
+        "preferred-install": "dist",
+        "optimize-autoloader": true,
         "allow-plugins": {
             "pestphp/pest-plugin": true,
             "phpstan/extension-installer": true
@@ -46,13 +49,13 @@
     "scripts": {
         "test:lint": "pint",
         "test:type": "phpstan analyse",
-        "refector": "rector",
-        "test": "pest",
+        "test:refactor": "rector",
+        "test:unit": "pest",
         "tests": [
             "@test:lint",
             "@test:type",
-            "@refector",
-            "@test"
+            "@test:refactor",
+            "@test:unit"
         ]
     },
     "minimum-stability": "dev",

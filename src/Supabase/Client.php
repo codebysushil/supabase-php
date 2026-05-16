@@ -41,7 +41,7 @@ final class Client
      *
      * @param  string  $table  Supabase table name
      */
-    public function table(string $table): QueryBuilder
+    public function from(string $table): QueryBuilder
     {
         return new QueryBuilder($this->client, $table);
     }

@@ -40,5 +40,24 @@ composer require sushilk/supabase
 
 ---
 
+### Quick start
+
+```php
+<?php
+
+require_once(__DIR__ . '/vendor/autoload.php');
+
+use Sushilk\Supabase\Client;                      
+$client = new Client(
+    'https://<project-id>.supabase.co',
+    'apikey'
+);
+
+$result = $client->from('users')->select('name, email')->get();
+
+var_dump($result);
+
+```
+
 ### Author
 **Sushil Kumar**
