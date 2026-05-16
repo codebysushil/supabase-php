@@ -1,7 +1,8 @@
 ## Supabase PHP Client
 
 <div align="center">
-
+	
+[![Tests](https://github.com/codebysushil/supabase-php/actions/workflows/tests.yml/badge.svg?branch=main)](https://github.com/codebysushil/supabase-php/actions/workflows/tests.yml)
 ![PHP](https://img.shields.io/badge/PHP-8.4%2B-777BB4?style=for-the-badge&logo=php)
 ![Supabase](https://img.shields.io/badge/Supabase-PostgreSQL-3ECF8E?style=for-the-badge&logo=supabase)
 
