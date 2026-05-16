@@ -1,3 +1,4 @@
 .env
 /vendor/
+/examples/index.php
 
