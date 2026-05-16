@@ -7,7 +7,9 @@ namespace Sushilk\Supabase;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\Promise\PromiseInterface;
+use InvalidArgumentException;
 use Psr\Http\Message\ResponseInterface;
+use Stringable;
 
 /**
  * Class QueryBuilder
@@ -38,7 +40,8 @@ class QueryBuilder
     public function __construct(
         protected Client $http,
         protected string $table
-    ) {}
+    ) {
+    }
 
     /**
      * Set whether the next request should be asynchronous.
@@ -80,10 +83,8 @@ class QueryBuilder
         string $operator = 'eq'
     ): static {
         if (is_array($value)) {
-            $mapped = array_map(function (mixed $item): string {
-                return is_scalar($item) || $item instanceof \Stringable ? (string) $item : '';
-            }, $value);
-            $value = '('.implode(',', $mapped).')';
+            $mapped = array_map(fn (mixed $item): string => is_scalar($item) || $item instanceof Stringable ? (string) $item : '', $value);
+            $value = '(' . implode(',', $mapped) . ')';
         } elseif (is_bool($value)) {
             $value = $value ? 'true' : 'false';
         } elseif (is_null($value)) {
@@ -91,7 +92,7 @@ class QueryBuilder
         }
 
         /** @var string|int|float $value */
-        $this->query[$column] = "{$operator}.{$value}";
+        $this->query[$column] = sprintf('%s.%s', $operator, $value);
 
         return $this;
     }
@@ -107,11 +108,10 @@ class QueryBuilder
      */
     public function get(): array|PromiseInterface|null
     {
-        $url = "rest/v1/{$this->table}";
+        $url = 'rest/v1/' . $this->table;
 
         if ($this->async) {
-            /** @var PromiseInterface $promise */
-            $promise = $this->http->getAsync($url, ['query' => $this->query])->then(
+            return $this->http->getAsync($url, ['query' => $this->query])->then(
                 /**
                  * @return array<string, mixed>|null
                  */
@@ -120,9 +120,8 @@ class QueryBuilder
                     $data = json_decode($response->getBody()->getContents(), true);
 
                     return $data;
-                });
-
-            return $promise;
+                }
+            );
         }
 
         $response = $this->http->get($url, [
@@ -153,19 +152,19 @@ class QueryBuilder
      */
     public function insert(array $data = []): array|PromiseInterface|null
     {
-        if (empty($data)) {
+        if ($data === []) {
             return null;
         }
 
-        $stringKeys = array_filter(array_keys($data), 'is_string');
-        if (empty($stringKeys)) {
-            throw new \InvalidArgumentException('Data must be key-value pairs.');
+        $stringKeys = array_filter(array_keys($data), is_string(...));
+        if ($stringKeys === []) {
+            throw new InvalidArgumentException('Data must be key-value pairs.');
         }
 
-        $url = "rest/v1/{$this->table}";
+        $url = 'rest/v1/' . $this->table;
 
         if ($this->async) {
-            $promise = $this->http->getAsync($url, [
+            return $this->http->getAsync($url, [
                 'json' => $data,
             ])->then(function (ResponseInterface $response): ?array {
                 /** @var array<string, mixed>|null $data */
@@ -173,8 +172,6 @@ class QueryBuilder
 
                 return $data;
             });
-
-            return $promise;
         }
 
         $response = $this->http->post($url, [
@@ -194,28 +191,28 @@ class QueryBuilder
      * @return array<mixed>|null
      *
      * @throws GuzzleException If the HTTP request fails.
-     * @throws \InvalidArgumentException If the data provided is not a valid associative array.
+     * @throws InvalidArgumentException If the data provided is not a valid associative array.
      */
     public function update(array $data = []): ?array
     {
-        if (empty($data)) {
+        if ($data === []) {
             return null;
         }
 
-        $stringKeys = array_filter(array_keys($data), 'is_string');
+        $stringKeys = array_filter(array_keys($data), is_string(...));
 
-        if (empty($stringKeys)) {
-            throw new \InvalidArgumentException('Data must be valid key-value pairs.');
+        if ($stringKeys === []) {
+            throw new InvalidArgumentException('Data must be valid key-value pairs.');
         }
 
         // 1. Initialize fallback URL to prevent 'Variable $url might not be defined'
-        $url = "rest/v1/{$this->table}";
+        $url = 'rest/v1/' . $this->table;
 
         // 2. Safeguard against non-stringable types inside the query property
         if (isset($this->query['id'])) {
             $rawId = $this->query['id'];
             $cleanId = (is_string($rawId) || is_numeric($rawId)) ? (string) $rawId : '';
-            $url = "rest/v1/{$this->table}?id={$cleanId}";
+            $url = sprintf('rest/v1/%s?id=%s', $this->table, $cleanId);
         }
 
         $response = $this->http->patch($url, [
@@ -241,13 +238,13 @@ class QueryBuilder
     public function delete(): ?array
     {
         // 1. Initialize fallback URL to prevent 'Variable $url might not be defined'
-        $url = "rest/v1/{$this->table}";
+        $url = 'rest/v1/' . $this->table;
 
         // 2. Safeguard against non-stringable types inside the query property
         if (isset($this->query['id'])) {
             $rawId = $this->query['id'];
             $cleanId = (is_string($rawId) || is_numeric($rawId)) ? (string) $rawId : '';
-            $url = "rest/v1/{$this->table}?id={$cleanId}";
+            $url = sprintf('rest/v1/%s?id=%s', $this->table, $cleanId);
         }
 
         $response = $this->http->delete($url);

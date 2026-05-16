@@ -23,14 +23,14 @@ final class Client
      * @param  string  $token  The API Key / Service Role Token for authentication.
      */
     public function __construct(
-        private string $url,
-        private string $token
+        private readonly string $url,
+        private readonly string $token
     ) {
         $this->client = new GuzzleClient([
-            'base_uri' => rtrim($this->url, '/').'/',
+            'base_uri' => rtrim($this->url, '/') . '/',
             'headers' => [
                 'apikey' => $this->token,
-                'Authorization' => 'Bearer '.$token,
+                'Authorization' => 'Bearer ' . $token,
                 'Content-Type' => 'application/json',
             ],
         ]);
@@ -51,7 +51,7 @@ final class Client
      */
     public function get(string $table): mixed
     {
-        $url = "rest/v1/{$table}";
+        $url = 'rest/v1/' . $table;
         $response = $this->client->get($url);
 
         return json_decode($response->getBody()->getContents(), true);
@@ -64,7 +64,7 @@ final class Client
         string $table,
         array $data = []
     ): mixed {
-        $url = "rest/v1/{$table}";
+        $url = 'rest/v1/' . $table;
         $response = $this->client->post($url, ['json' => $data]);
 
         return json_decode($response->getBody()->getContents(), true);
