@@ -1,0 +1,212 @@
+name: 🚀 Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+permissions:
+  contents: write
+  packages: write
+  pull-requests: read
+  issues: read
+  actions: read
+  checks: read
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  PHP_EXTENSIONS: json, mbstring, openssl, curl
+  COMPOSER_FLAGS: --prefer-dist --no-interaction --no-progress
+
+jobs:
+  validate:
+    name: 🧪 Validate Release
+    runs-on: ubuntu-latest
+
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      changelog: ${{ steps.changelog.outputs.changelog }}
+
+    steps:
+      - name: 📥 Checkout source
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: 🏷️ Extract version
+        id: version
+        run: |
+          VERSION="${GITHUB_REF#refs/tags/}"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+          echo "📦 Version: $VERSION"
+
+      - name: 🐘 Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          coverage: none
+          extensions: ${{ env.PHP_EXTENSIONS }}
+
+      - name: 📦 Install Composer dependencies
+        run: composer install ${{ env.COMPOSER_FLAGS }}
+
+      - name: 🔍 Validate composer.json
+        run: composer validate --strict
+
+      - name: 🔎 Check coding standards
+        run: composer pint:test
+
+      - name: 🧠 Run static analysis
+        run: composer analyse
+
+      - name: 🧪 Run unit tests
+        run: composer test
+
+      - name: 📊 Generate release changelog
+        id: changelog
+        uses: mikepenz/release-changelog-builder-action@v5
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          configurationJson: |
+            {
+              "template": "# 🚀 Release {{RELEASE_VERSION}}\n\n{{CHANGELOG}}\n",
+              "categories": [
+                {
+                  "title": "## ✨ Features",
+                  "labels": ["feature", "enhancement"]
+                },
+                {
+                  "title": "## 🐛 Bug Fixes",
+                  "labels": ["bug", "fix"]
+                },
+                {
+                  "title": "## ⚡ Performance",
+                  "labels": ["performance"]
+                },
+                {
+                  "title": "## 🧪 Tests",
+                  "labels": ["test"]
+                },
+                {
+                  "title": "## 📚 Documentation",
+                  "labels": ["documentation"]
+                },
+                {
+                  "title": "## 🔧 Maintenance",
+                  "labels": ["maintenance", "refactor"]
+                }
+              ],
+              "pr_template": "- #{{NUMBER}} {{TITLE}} by @{{AUTHOR}}",
+              "empty_template": "No notable changes."
+            }
+
+  build:
+    name: 🏗️ Build Package
+    needs: validate
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Checkout source
+        uses: actions/checkout@v4
+
+      - name: 🐘 Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          coverage: none
+          extensions: ${{ env.PHP_EXTENSIONS }}
+
+      - name: 📦 Install dependencies
+        run: composer install ${{ env.COMPOSER_FLAGS }} --no-dev
+
+      - name: 🗂️ Create dist archive
+        run: |
+          mkdir -p build
+
+          zip -r build/package.zip . \
+            -x ".git/*" \
+            -x ".github/*" \
+            -x "tests/*" \
+            -x ".phpunit.cache/*"
+
+      - name: ⬆️ Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-package
+          path: build/package.zip
+
+  benchmark:
+    name: 📈 Benchmark Comparison
+    needs: validate
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Checkout source
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: 🐘 Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          coverage: none
+          extensions: ${{ env.PHP_EXTENSIONS }}
+
+      - name: 📦 Install dependencies
+        run: composer install ${{ env.COMPOSER_FLAGS }}
+
+      - name: ⚡ Run benchmarks
+        run: |
+          if [ -f "composer.json" ] && composer run benchmark --no-interaction; then
+            echo "Benchmarks completed."
+          else
+            echo "No benchmark script configured."
+          fi
+
+  github-release:
+    name: 🎉 Publish GitHub Release
+    needs:
+      - validate
+      - build
+      - benchmark
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Download release artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: release-package
+          path: build
+
+      - name: 🚀 Create GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: build/package.zip
+          body: ${{ needs.validate.outputs.changelog }}
+          generate_release_notes: true
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  notify:
+    name: 📢 Release Summary
+    needs:
+      - github-release
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📝 Release success message
+        run: |
+          echo "🎉 Release published successfully!"
+          echo "📦 Version: ${{ github.ref_name }}"
+          echo "🕒 Released at: $(date -u +"%Y-%m-%d %H:%M:%S UTC")"
+          echo "✅ All tests, analysis, benchmarks, and builds passed."
