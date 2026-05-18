@@ -69,4 +69,68 @@ final class Client
 
         return json_decode($response->getBody()->getContents(), true);
     }
+
+    /**
+     * @param string $table  Supabase table name.
+     *
+     * @parsm int $id supabase table rows id
+     *
+     * @param array<string, mixed> $data
+     */
+    public function put(
+        string $table,
+        ?int $id = null,
+        array $data = []
+    ): mixed {
+        $url = 'rest/v1/' . $table . '?id=eq.' . $id;
+        $response = $this->client->put($url, ['json' => $data]);
+        return json_decode($response->getBody()->getContents(), true);
+    }
+
+    /**
+     * @param string $table  Supabase table name.
+     *
+     * @param int $id  Supabase rows id.
+     *
+     * @param array<string, mixed> $data
+     */
+    public function patch(
+        string $table,
+        ?int $id = null,
+        array $data = []
+    ): mixed {
+        $url = 'rest/v1/' . $table . '?id=eq.' . $id;
+        //$url = http_build_query($url);
+        $response = $this->client->patch($url, ['headers' => ['Prefer' => 'return=representation'], 'json' => $data]);
+        return json_decode($response->getBody()->getContents(), true);
+    }
+
+    /**
+     * @param string $table  Supabase table name.
+     *
+     * @param int $id Supabase row id.
+     */
+    public function delete(
+        string $table,
+        ?int $id = null
+    ): mixed {
+        $url = 'rest/v1/' . $table . '?id=eq.' . $id;
+        $response = $this->client->delete($url);
+        return json_decode($response->getBody()->getContents(), true);
+    }
+
+    protected function decode(): mixed
+    {
+        $code = $this->client->getStatusCode();
+        $message = $this->client->getReasonPhrase();
+
+        /** @var array $content */
+        $content = json_decode($this->client->getBody()->getContents(), true);
+
+        return [
+            'status_code' => $code,
+            'message' => $message,
+            'body' => $content
+        ];
+    }
 }
