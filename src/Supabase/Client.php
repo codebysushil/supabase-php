@@ -118,19 +118,4 @@ final class Client
         $response = $this->client->delete($url);
         return json_decode($response->getBody()->getContents(), true);
     }
-
-    protected function decode(): mixed
-    {
-        $code = $this->client->getStatusCode();
-        $message = $this->client->getReasonPhrase();
-
-        /** @var array $content */
-        $content = json_decode($this->client->getBody()->getContents(), true);
-
-        return [
-            'status_code' => $code,
-            'message' => $message,
-            'body' => $content
-        ];
-    }
 }

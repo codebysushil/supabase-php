@@ -4,15 +4,19 @@ declare(strict_types=1);
 
 namespace Sushilk\Supabase\Http;
 
-use Psr\Http\Message\ResponseInterface;
+use GuzzleHttp\Client;
 
 class Response
 {
-    public function body() {
+    protected Client $http;
 
+    public function body(): string
+    {
+        return $this->getBody();
     }
 
-    public function json() {
-        return json_decode(true);
+    public function json(): mixed
+    {
+        return json_decode((string) $this->http->getBody()->getContents(), true);
     }
 }
